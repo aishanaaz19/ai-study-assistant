@@ -11,6 +11,7 @@ An intelligent, student-friendly web app that helps you upload study materials (
 - 📚 Generate Flashcards
 - ❓ Ask Questions about Uploaded Content
 - 🎨 Sleek Dark-Themed UI (Tailwind CSS)
+- suggested questions based on the pdf provided
 
 ---
 
