@@ -67,7 +67,7 @@ pip install -r requirements.txt
 python summarizer.py
 ```
 
-> ✨ Make sure to add `.env` in `server/` with your API keys (if using OpenAI)
+> ✨ Make sure to add `.env` in `server/` with your API keys
 
 ---
 
