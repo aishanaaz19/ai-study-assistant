@@ -21,10 +21,10 @@ An intelligent, student-friendly web app that helps you upload study materials (
 |------------|------------------------------|
 | Frontend   | React, Tailwind CSS          |
 | Backend    | Node.js, Express             |
-| AI Engine  | HuggingFace Transformers (BART) |
+| AI Engine  | Gemini API                   |
 | Python API | Flask, Transformers          |
 | File Upload| Multer, pdf-parse            |
-| Deployment | Vercel / Render / Railway    |
+| Deployment | Vercel and Render   |
 
 ---
 
@@ -48,16 +48,16 @@ cd ai-study-assistant
 
 ### 2. Setup Frontend (React)
 ```bash
-cd client
+cd frontend
 npm install
-npm start
+npm run dev
 ```
 
 ### 3. Setup Backend (Node.js)
 ```bash
-cd ../server
+cd backend
 npm install
-node index.js
+npm run dev
 ```
 
 ### 4. Optional: Run Python Summarizer
@@ -73,7 +73,7 @@ python summarizer.py
 
 ## 🔍 Sample `.env`
 ```
-OPENAI_API_KEY=your_api_key_here
+GEMINI_API_KEY=your_api_key_here
 ```
 
 ---
