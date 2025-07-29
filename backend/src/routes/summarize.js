@@ -1,5 +1,5 @@
 import express from "express";
-import { summarizeWithHuggingFace } from "../utils/summarizer.js";
+import { generateAIContent } from "../utils/summarizer.js"; // Import the new function
 const router = express.Router();
 
 router.post("/", async (req, res) => {
@@ -10,10 +10,12 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const summary = await summarizeWithHuggingFace(text);
+    // Call generateAIContent specifically for summary
+    const summary = await generateAIContent(text, 'summary');
     res.json({ summary });
   } catch (err) {
-    res.status(500).json({ error: "Failed to summarize", details: err.message });
+    console.error("❌ Summarization Error:", err.message);
+    res.status(500).json({ error: "Failed to summarize text", details: err.message });
   }
 });
 
