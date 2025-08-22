@@ -1,1 +1,27 @@
 @import "tailwindcss";
+/* Subtle Rainbow Background Animation */
+.rainbow-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background: linear-gradient(270deg, 
+    #ff6699, #ffcc66, #66ccff, #66ff99, 
+    #cc66ff, #ff6699, #ffcc66
+  );
+  background-size: 1200% 1200%;
+  animation: rainbow 45s ease infinite;
+}
+
+/* Dark theme version - more subdued */
+.rainbow-bg-dark {
+  opacity: 0.08;
+  filter: brightness(0.4) saturate(0.6) contrast(1.1);
+}
+
+@keyframes rainbow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
