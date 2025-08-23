@@ -1,6 +1,6 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { OAuth2Client } from 'google-auth-library';
+import { OAuth2Client } from 'google-auth-library'; // ✅ Add this import
 import { 
   register, 
   login, 
@@ -8,9 +8,14 @@ import {
   getSummaryHistory 
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
-import { validateRegister, validateLogin } from '../middleware/validation.js'; // ✅ Correct import
+import { validateRegister, validateLogin } from '../middleware/validation.js';
+import { generateToken } from '../utils/jwt.js';
+import User from '../models/User.js';
 
 const router = express.Router();
+
+// ✅ Initialize Google OAuth client
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Rate limiting
 const authLimiter = rateLimit({
@@ -22,17 +27,29 @@ const authLimiter = rateLimit({
   }
 });
 
-export const googleAuth = async (req, res) => {
+// ✅ Google Auth Route (Fixed)
+const googleAuth = async (req, res) => {
   try {
     const { token } = req.body;
     
-    // Verify the Google token
+    console.log('📥 Received Google token:', token ? 'Present' : 'Missing');
+    
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    // Verify the Google token using the initialized client
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     
     const payload = ticket.getPayload();
+    console.log('✅ Token verified for:', payload.email);
+    
     const { sub, email, name, picture } = payload;
     
     // Check if user already exists
@@ -43,15 +60,19 @@ export const googleAuth = async (req, res) => {
       user = await User.create({
         name,
         email,
-        password: 'google-auth', // Placeholder password for Google users
+        password: 'google-auth', // Placeholder for Google users
         googleId: sub,
         profilePicture: picture
       });
-    } else if (!user.googleId) {
-      // Link existing user with Google
-      user.googleId = sub;
-      user.profilePicture = picture;
-      await user.save();
+      console.log('👤 Created new user:', email);
+    } else {
+      // Update Google info if needed
+      if (!user.googleId) {
+        user.googleId = sub;
+        user.profilePicture = picture;
+        await user.save();
+      }
+      console.log('👤 Found existing user:', email);
     }
 
     // Generate JWT token
@@ -70,10 +91,10 @@ export const googleAuth = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Google auth error:', error);
+    console.error('❌ Google auth error:', error);
     res.status(500).json({
       success: false,
-      message: 'Google authentication failed'
+      message: 'Google authentication failed: ' + error.message
     });
   }
 };
@@ -81,7 +102,8 @@ export const googleAuth = async (req, res) => {
 // Public routes
 router.post('/register', authLimiter, validateRegister, register);
 router.post('/login', authLimiter, validateLogin, login);
-router.post('/google', googleAuth);
+router.post('/google', googleAuth); // ✅ Google auth route
+
 // Protected routes
 router.get('/me', protect, getMe);
 router.get('/summaries', protect, getSummaryHistory);
