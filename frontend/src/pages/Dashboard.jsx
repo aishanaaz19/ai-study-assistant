@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { jsPDF } from "jspdf";
+import { useEffect } from 'react';
+import Navbar from '../components/NavBar.jsx';
+
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { 
   Upload, 
@@ -13,13 +16,16 @@ import {
   Settings, 
   ChevronDown,
   ChevronUp,
+  Share2,
   Home,
   ArrowLeft,
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import YouTubeTranscript from './../components/YoutubeTranscript';
 
 const Dashboard = () => {
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
   
   // Your original state variables
@@ -30,6 +36,49 @@ const Dashboard = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [summaryWordLimit, setSummaryWordLimit] = useState(200);
   const [message, setMessage] = useState({ text: '', type: '' });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      
+      if (!token) {
+        navigate('/auth');
+        return;
+      }
+
+      try {
+        // Try to get user from localStorage first
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+
+        // Verify token with backend
+        const response = await axios.get('http://localhost:3000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        setUser(response.data.user);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        handleLogout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  const handleLogout = () => {
+    // Clear all user data
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    
+    alert('✅ Logged out successfully!');
+    navigate('/auth');
+  };
 
   // Your original functions
   const handleFileChange = (e) => {
@@ -57,35 +106,47 @@ const Dashboard = () => {
   };
 
   const handleSubmit = async () => {
-    if (!file) {
-      setError("Please upload a PDF file.");
-      return;
-    }
+  if (!file) {
+    setError("Please upload a PDF file.");
+    return;
+  }
 
-    const formData = new FormData();
-    formData.append("pdfFile", file);
-    formData.append("wordLimit", summaryWordLimit.toString());
+  // Get the JWT token from localStorage
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    setError("Please login to use this feature.");
+    navigate('/auth');
+    return;
+  }
 
-    try {
-      setLoading(true);
-      setSummary("");
-      setError("");
-      showMessage('', '');
+  const formData = new FormData();
+  formData.append("pdfFile", file);
+  formData.append("wordLimit", summaryWordLimit.toString());
 
-      const res = await axios.post("http://localhost:3000/api/pdf-summary", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+  try {
+    setLoading(true);
+    setSummary("");
+    setError("");
+    showMessage('', '');
 
-      setSummary(res.data.summary);
-      showMessage("✅ Summary generated successfully!", "success");
-    } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message;
-      setError("❌ Failed to summarize. " + errorMessage);
-      showMessage("❌ Failed to summarize.", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const res = await axios.post("http://localhost:3000/api/pdf-summary", formData, {
+      headers: { 
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}` // ✅ Add this line
+      },
+    });
+
+    setSummary(res.data.summary);
+    showMessage("✅ Summary generated successfully!", "success");
+  } catch (err) {
+    const errorMessage = err.response?.data?.error || err.message;
+    setError("❌ Failed to summarize. " + errorMessage);
+    showMessage("❌ Failed to summarize.", "error");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDownloadPDF = () => {
     if (!summary) {
@@ -153,6 +214,17 @@ const Dashboard = () => {
     }
   };
 
+  const shareOnWhatsApp = () => {
+  if (!summary) {
+    showMessage("No summary to share.", "error");
+    return;
+  }
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(summary)}`;
+  window.open(whatsappUrl, '_blank');
+  showMessage("✅ Opened WhatsApp for sharing!", "success");
+};
+
+
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Background elements similar to landing page */}
@@ -175,7 +247,7 @@ const Dashboard = () => {
       </div>
 
       {/* Navigation Header */}
-      <header className="fixed w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
+      {/* <header className="fixed w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div 
@@ -198,7 +270,10 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
-      </header>
+      </header> */}
+
+      {/* Navigation Header with User Info */}
+      <Navbar user={user} onLogout={handleLogout} />
 
       {/* Main Content */}
       <main className="pt-24 pb-12 px-6 lg:px-8 relative z-10">
@@ -385,6 +460,15 @@ const Dashboard = () => {
                     >
                       <Copy className="w-4 h-4" />
                       Copy
+                    </button>
+
+                    {/* WhatsApp Share Button */}
+                    <button
+                      onClick={shareOnWhatsApp}
+                      className="bg-green-600/20 hover:bg-green-600/30 text-green-300 px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 hover:scale-105"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      Share
                     </button>
                     
                     {/* Download Dropdown */}

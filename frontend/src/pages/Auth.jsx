@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, Brain, MessageSquare, Zap } from 'lucide-react';
-
+import axios from 'axios';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -14,6 +14,9 @@ const Auth = () => {
     password: '',
     confirmPassword: ''
   });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
 
   // Generate stars for background
   const generateStars = () => {
@@ -33,30 +36,285 @@ const Auth = () => {
 
   const [stars] = useState(generateStars());
 
+  // Enhanced Google Sign-In Setup
+  useEffect(() => {
+    let mounted = true;
+
+    const loadGoogleScript = () => {
+      // Check if already loaded
+      if (window.google?.accounts?.id) {
+        if (mounted) {
+          initializeGoogle();
+        }
+        return;
+      }
+
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (existingScript) {
+        existingScript.onload = () => {
+          if (mounted) {
+            setTimeout(initializeGoogle, 100);
+          }
+        };
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        console.log('✅ Google SDK loaded');
+        if (mounted) {
+          setTimeout(initializeGoogle, 100);
+        }
+      };
+      
+      script.onerror = () => {
+        console.error('❌ Failed to load Google SDK');
+        if (mounted) {
+          setGoogleReady(false);
+        }
+      };
+      
+      document.head.appendChild(script);
+    };
+
+    const initializeGoogle = () => {
+      if (window.google?.accounts?.id && mounted) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID',
+            callback: handleGoogleResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+            use_fedcm_for_prompt: true,
+            itp_support: true
+          });
+          setGoogleReady(true);
+          console.log('✅ Google Sign-In initialized with FedCM support');
+        } catch (error) {
+          console.error('❌ Google initialization error:', error);
+          setGoogleReady(false);
+        }
+      }
+    };
+
+    loadGoogleScript();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleGoogleResponse = async (response) => {
+    console.log('🔄 Google response received');
+    
+    if (!response.credential) {
+      alert('❌ Google Sign-In failed: No credential received');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log('📤 Sending Google token to backend...');
+      
+      const res = await axios.post('http://localhost:3000/api/auth/google', {
+        token: response.credential
+      });
+
+      console.log('📥 Backend response:', res.data);
+
+      if (res.data.success) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        alert('✅ Google login successful! Welcome to StudyMate.');
+        navigate('/dashboard');
+      } else {
+        throw new Error(res.data.message || 'Google login failed');
+      }
+    } catch (error) {
+      console.error('❌ Google login error:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Google login failed';
+      alert(`❌ ${errorMsg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleAuth = () => {
     setIsSignup(!isSignup);
     setFormData({ fullName: '', email: '', password: '', confirmPassword: '' });
+    setErrors({});
     setShowPassword(false);
     setShowConfirmPassword(false);
   };
 
+  // Frontend validation
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Signup validation
+    if (isSignup) {
+      if (!formData.fullName.trim()) {
+        newErrors.fullName = 'Full name is required';
+      } else if (formData.fullName.length < 2) {
+        newErrors.fullName = 'Name must be at least 2 characters';
+      }
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    // Confirm password validation (only for signup)
+    if (isSignup) {
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    navigate('/dashboard');
+
+    // Validate form before submitting
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (isSignup) {
+        // Registration
+        const response = await axios.post('http://localhost:3000/api/auth/register', {
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password
+        });
+
+        if (response.data.success) {
+          alert('✅ Registration successful! Please login to continue.');
+          // Switch to login form
+          setIsSignup(false);
+          setFormData({ fullName: '', email: formData.email, password: '', confirmPassword: '' });
+        }
+      } else {
+        // Login
+        const response = await axios.post('http://localhost:3000/api/auth/login', {
+          email: formData.email,
+          password: formData.password
+        });
+
+        if (response.data.success) {
+          // Store token and user data
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+          
+          alert('✅ Login successful! Welcome to StudyMate.');
+          navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      
+      if (error.response?.data?.errors) {
+        // Handle validation errors from backend
+        const backendErrors = {};
+        error.response.data.errors.forEach(err => {
+          const field = err.path === 'name' ? 'fullName' : err.path;
+          backendErrors[field] = err.msg;
+        });
+        setErrors(backendErrors);
+      } else {
+        const errorMsg = error.response?.data?.message || 'Something went wrong';
+        alert(`❌ ${errorMsg}`);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Enhanced Google Auth Handler
   const handleGoogleAuth = () => {
-    console.log('Google auth clicked');
-  };
+  console.log('🔄 Google Auth button clicked');
+
+  if (!googleReady) {
+    alert('⏳ Google Sign-In is loading. Please wait and try again.');
+    return;
+  }
+
+  if (window.google?.accounts?.id) {
+    try {
+      // Create a proper button container
+      const buttonContainer = document.getElementById('google-signin-fallback-' + (isSignup ? 'signup' : 'login'));
+      if (buttonContainer) {
+        buttonContainer.innerHTML = '';
+        
+        // Render with proper pixel width (not percentage)
+        window.google.accounts.id.renderButton(buttonContainer, {
+          theme: 'outline',
+          size: 'large',
+          width: 320, // ✅ Use pixels, not percentage
+          text: 'signin_with',
+          shape: 'rectangular'
+        });
+      } else {
+        // Direct prompt as fallback
+        window.google.accounts.id.prompt();
+      }
+    } catch (error) {
+      console.error('❌ Google auth error:', error);
+      // Fallback to direct popup (might get blocked)
+      window.open(
+        `https://accounts.google.com/oauth/authorize?client_id=${import.meta.env.VITE_GOOGLE_CLIENT_ID}&response_type=code&scope=openid email profile&redirect_uri=${window.location.origin}`,
+        'googleSignIn',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+    }
+  }
+};
+
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
       
+      {/* Debug info in development */}
+      {import.meta.env.DEV && (
+        <div className="fixed bottom-4 right-4 z-50 bg-gray-800 text-white p-2 rounded text-xs">
+          Google: {googleReady ? '✅' : '❌'} | 
+          Client ID: {import.meta.env.VITE_GOOGLE_CLIENT_ID ? '✅' : '❌'}
+        </div>
+      )}
+
       {/* Back to Home Button */}
       <button
         onClick={() => navigate('/')}
@@ -121,9 +379,13 @@ const Auth = () => {
                     placeholder="Full Name"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300 ${
+                      errors.fullName ? 'border-red-500' : 'border-white/20'
+                    }`}
                   />
+                  {errors.fullName && (
+                    <span className="text-red-400 text-sm mt-1 block">{errors.fullName}</span>
+                  )}
                 </div>
 
                 <div>
@@ -133,9 +395,13 @@ const Auth = () => {
                     placeholder="Email Address"
                     value={formData.email}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300 ${
+                      errors.email ? 'border-red-500' : 'border-white/20'
+                    }`}
                   />
+                  {errors.email && (
+                    <span className="text-red-400 text-sm mt-1 block">{errors.email}</span>
+                  )}
                 </div>
 
                 <div className="relative">
@@ -145,8 +411,9 @@ const Auth = () => {
                     placeholder="Password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300 ${
+                      errors.password ? 'border-red-500' : 'border-white/20'
+                    }`}
                   />
                   <button
                     type="button"
@@ -155,6 +422,9 @@ const Auth = () => {
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
+                  {errors.password && (
+                    <span className="text-red-400 text-sm mt-1 block">{errors.password}</span>
+                  )}
                 </div>
 
                 <div className="relative">
@@ -164,8 +434,9 @@ const Auth = () => {
                     placeholder="Confirm Password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300 ${
+                      errors.confirmPassword ? 'border-red-500' : 'border-white/20'
+                    }`}
                   />
                   <button
                     type="button"
@@ -174,13 +445,17 @@ const Auth = () => {
                   >
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
+                  {errors.confirmPassword && (
+                    <span className="text-red-400 text-sm mt-1 block">{errors.confirmPassword}</span>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-700 disabled:to-gray-600 text-white py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100"
                 >
-                  Create Account
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
 
                 <div className="relative">
@@ -192,19 +467,44 @@ const Auth = () => {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleGoogleAuth}
-                  className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-xl font-medium transition-all duration-300 hover:bg-white/20 flex items-center justify-center gap-3"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Continue with Google
-                </button>
+                <div className="space-y-4">
+  {/* Manual trigger button */}
+  <button
+    type="button"
+    onClick={handleGoogleAuth}
+    disabled={loading || !googleReady}
+    className={`w-full py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 transform hover:scale-105 ${
+      googleReady 
+        ? 'bg-white text-gray-800 hover:bg-gray-100' 
+        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+    } ${loading ? 'opacity-50' : ''}`}
+  >
+    {!googleReady ? (
+      <>
+        <div className="animate-spin w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+        Loading Google...
+      </>
+    ) : (
+      <>
+        <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continue with Google
+      </>
+    )}
+  </button>
+
+  {/* Google's native button container */}
+  <div 
+    id="google-signin-fallback-signup" 
+    className="w-full flex justify-center"
+    style={{ minHeight: '44px' }}
+  ></div>
+</div>
+
 
                 <div className="text-center">
                   <p className="text-gray-400">
@@ -212,7 +512,8 @@ const Auth = () => {
                     <button
                       type="button"
                       onClick={toggleAuth}
-                      className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-300"
+                      disabled={loading}
+                      className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-300 disabled:opacity-50"
                     >
                       Login here
                     </button>
@@ -223,94 +524,78 @@ const Auth = () => {
           </div>
 
           {/* Branding Side (Right) - White */}
-<div className="w-full bg-white relative flex flex-col justify-center items-center p-12">
-  
-  {/* Rainbow Background Animation */}
-  <div className="rainbow-bg"></div>
-  
-  <div className="relative z-10 text-center">
-    {/* BLACK logo for white background */}
-    <img 
-      src="/logo-black.png" 
-      alt="StudyMate" 
-      className="w-20 h-20 mx-auto mb-6"
-    />
-    <h1 className="text-5xl font-light tracking-tight text-black mb-6">
-      StudyMate
-    </h1>
-    <p className="text-gray-600 text-lg max-w-md leading-relaxed mb-8">
-      Transform your learning experience with AI-powered summaries, flashcards, and intelligent study assistance.
-    </p>
-    
-    {/* Feature icons */}
-    <div className="flex justify-center space-x-12 mt-6">
-      <div className="flex flex-col items-center">
-        <Brain size={16} className="text-gray-600 mb-1" />
-        <span className="text-gray-600 text-xs font-medium">AI Summarization</span>
-      </div>
-      <div className="flex flex-col items-center">
-        <MessageSquare size={16} className="text-gray-600 mb-1" />
-        <span className="text-gray-600 text-xs font-medium">Q&A Assistant</span>
-      </div>
-      <div className="flex flex-col items-center">
-        <Zap size={16} className="text-gray-600 mb-1" />
-        <span className="text-gray-600 text-xs font-medium">Lightning Fast</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-
+          <div className="w-full bg-white relative flex flex-col justify-center items-center p-12">
+            <div className="rainbow-bg"></div>
+            <div className="relative z-10 text-center">
+              <img 
+                src="/logo-black.png" 
+                alt="StudyMate" 
+                className="w-20 h-20 mx-auto mb-6"
+              />
+              <h1 className="text-5xl font-light tracking-tight text-black mb-6">
+                StudyMate
+              </h1>
+              <p className="text-gray-600 text-lg max-w-md leading-relaxed mb-8">
+                Transform your learning experience with AI-powered summaries, flashcards, and intelligent study assistance.
+              </p>
+              
+              <div className="flex justify-center space-x-12 mt-6">
+                <div className="flex flex-col items-center">
+                  <Brain size={16} className="text-gray-600 mb-1" />
+                  <span className="text-gray-600 text-xs font-medium">AI Summarization</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <MessageSquare size={16} className="text-gray-600 mb-1" />
+                  <span className="text-gray-600 text-xs font-medium">Q&A Assistant</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <Zap size={16} className="text-gray-600 mb-1" />
+                  <span className="text-gray-600 text-xs font-medium">Lightning Fast</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Login Panel */}
         <div className="w-1/2 h-full flex">
           {/* Branding Side (Left) - White */}
-<div className="w-full bg-white relative flex flex-col justify-center items-center p-12">
-  
-  {/* Subtle Background Animations */}
-  <div className="absolute inset-0 bg-gradient-to-bl from-purple-50 to-blue-50 animate-pulse pointer-events-none"></div>
-  <div className="absolute top-16 left-16 w-14 h-14 bg-indigo-100 rounded-full animate-pulse opacity-25 pointer-events-none" style={{animationDuration: '4s'}}></div>
-  <div className="absolute bottom-16 right-16 w-10 h-10 bg-pink-100 rounded-full animate-bounce opacity-30 pointer-events-none" style={{animationDuration: '2.5s'}}></div>
-  
-  <div className="relative z-10 text-center">
-    {/* BLACK logo for white background */}
-    <img 
-      src="/logo-black.png" 
-      alt="StudyMate" 
-      className="w-20 h-20 mx-auto mb-6"
-    />
-    <h1 className="text-5xl font-light tracking-tight text-black mb-6">
-      StudyMate
-    </h1>
-    <p className="text-gray-600 text-lg max-w-md leading-relaxed mb-8">
-      Welcome back! Continue your learning journey with AI-powered study tools.
-    </p>
-    
-    {/* Feature icons */}
-    <div className="flex justify-center space-x-12 mt-6">
-      <div className="flex flex-col items-center">
-        <Brain size={16} className="text-gray-600 mb-1" />
-        <span className="text-gray-600 text-xs font-medium">AI Summarization</span>
-      </div>
-      <div className="flex flex-col items-center">
-        <MessageSquare size={16} className="text-gray-600 mb-1" />
-        <span className="text-gray-600 text-xs font-medium">Q&A Assistant</span>
-      </div>
-      <div className="flex flex-col items-center">
-        <Zap size={16} className="text-gray-600 mb-1" />
-        <span className="text-gray-600 text-xs font-medium">Lightning Fast</span>
-      </div>
-    </div>
-  </div>
-</div>
+          <div className="w-full bg-white relative flex flex-col justify-center items-center p-12">
+            <div className="absolute inset-0 bg-gradient-to-bl from-purple-50 to-blue-50 animate-pulse pointer-events-none"></div>
+            <div className="absolute top-16 left-16 w-14 h-14 bg-indigo-100 rounded-full animate-pulse opacity-25 pointer-events-none" style={{animationDuration: '4s'}}></div>
+            <div className="absolute bottom-16 right-16 w-10 h-10 bg-pink-100 rounded-full animate-bounce opacity-30 pointer-events-none" style={{animationDuration: '2.5s'}}></div>
+            
+            <div className="relative z-10 text-center">
+              <img 
+                src="/logo-black.png" 
+                alt="StudyMate" 
+                className="w-20 h-20 mx-auto mb-6"
+              />
+              <h1 className="text-5xl font-light tracking-tight text-black mb-6">
+                StudyMate
+              </h1>
+              <p className="text-gray-600 text-lg max-w-md leading-relaxed mb-8">
+                Welcome back! Continue your learning journey with AI-powered study tools.
+              </p>
+              
+              <div className="flex justify-center space-x-12 mt-6">
+                <div className="flex flex-col items-center">
+                  <Brain size={16} className="text-gray-600 mb-1" />
+                  <span className="text-gray-600 text-xs font-medium">AI Summarization</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <MessageSquare size={16} className="text-gray-600 mb-1" />
+                  <span className="text-gray-600 text-xs font-medium">Q&A Assistant</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <Zap size={16} className="text-gray-600 mb-1" />
+                  <span className="text-gray-600 text-xs font-medium">Lightning Fast</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-
-
-          {/* Form Side (Right) - Black with Stars */}
+          {/* Login Form Side (Right) - Black with Stars */}
           <div className="w-full bg-black text-white relative flex flex-col justify-center items-center p-12">
             
             {/* Animated Starry Background */}
@@ -356,9 +641,13 @@ const Auth = () => {
                     placeholder="Email Address"
                     value={formData.email}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300 ${
+                      errors.email ? 'border-red-500' : 'border-white/20'
+                    }`}
                   />
+                  {errors.email && (
+                    <span className="text-red-400 text-sm mt-1 block">{errors.email}</span>
+                  )}
                 </div>
 
                 <div className="relative">
@@ -368,8 +657,9 @@ const Auth = () => {
                     placeholder="Password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300"
+                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all duration-300 ${
+                      errors.password ? 'border-red-500' : 'border-white/20'
+                    }`}
                   />
                   <button
                     type="button"
@@ -378,13 +668,17 @@ const Auth = () => {
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
+                  {errors.password && (
+                    <span className="text-red-400 text-sm mt-1 block">{errors.password}</span>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-700 disabled:to-gray-600 text-white py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100"
                 >
-                  Sign In
+                  {loading ? 'Signing In...' : 'Sign In'}
                 </button>
 
                 <div className="relative">
@@ -396,19 +690,38 @@ const Auth = () => {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleGoogleAuth}
-                  className="w-full bg-white/10 border border-white/20 text-white py-3 rounded-xl font-medium transition-all duration-300 hover:bg-white/20 flex items-center justify-center gap-3"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Continue with Google
-                </button>
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={handleGoogleAuth}
+                    disabled={loading || !googleReady}
+                    className={`w-full py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 transform hover:scale-105 ${
+                      googleReady 
+                        ? 'bg-white text-gray-800 hover:bg-gray-100' 
+                        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                    } ${loading ? 'opacity-50' : ''}`}
+                  >
+                    {!googleReady ? (
+                      <>
+                        <div className="animate-spin w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+                        Loading Google...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continue with Google
+                      </>
+                    )}
+                  </button>
+
+                  {/* Fallback Google Button Container */}
+                  <div id="google-signin-fallback-login" className="w-full"></div>
+                </div>
 
                 <div className="text-center">
                   <p className="text-gray-400">
@@ -416,7 +729,8 @@ const Auth = () => {
                     <button
                       type="button"
                       onClick={toggleAuth}
-                      className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-300"
+                      disabled={loading}
+                      className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-300 disabled:opacity-50"
                     >
                       Sign up here
                     </button>

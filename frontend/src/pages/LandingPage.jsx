@@ -639,21 +639,7 @@ const LandingPage = () => {
           scroll-behavior: smooth;
         }
       `}</style>
-      return (
-        <div className="min-h-screen bg-black text-white relative overflow-hidden">
-          {/* All your existing content... */}
-          
-          {/* Footer */}
-          <footer className="border-t border-white/10 py-12 px-6 lg:px-8 relative z-10">
-            {/* Footer content... */}
-          </footer>
-          
-          {/* ADD THIS LINE */}
           <ScrollToTop />
-        </div>
-      );
-
-
     </div>
   );
 };
