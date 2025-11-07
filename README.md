@@ -60,13 +60,6 @@ npm install
 npm run dev
 ```
 
-### 4. Optional: Run Python Summarizer
-```bash
-cd ../python-ai
-pip install -r requirements.txt
-python summarizer.py
-```
-
 > ✨ Make sure to add `.env` in `server/` with your API keys
 
 ---
@@ -79,7 +72,7 @@ GEMINI_API_KEY=your_api_key_here
 ---
 
 ## 🙌 Author
-Built with 💡 by **Team**
+Built with 💡 by **Aisha & Team**
 
 ---
 
