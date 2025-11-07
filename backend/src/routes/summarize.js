@@ -1,5 +1,5 @@
 import express from "express";
-import { generateAIContent } from "../utils/summarizer.js"; // Import the new function
+import { generateAIContent } from "../utils/summarizer.js"; 
 const router = express.Router();
 
 router.post("/", async (req, res) => {

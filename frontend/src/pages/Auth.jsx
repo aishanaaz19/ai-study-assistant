@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, Brain, MessageSquare, Zap } from 'lucide-react';
 import axios from 'axios';
+import { Toaster, toast } from 'react-hot-toast';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const Auth = () => {
 
   const [stars] = useState(generateStars());
 
-  // Enhanced Google Sign-In Setup
+  // Enhanced Google Sign-In Setup (your original code)
   useEffect(() => {
     let mounted = true;
 
@@ -112,7 +113,7 @@ const Auth = () => {
     console.log('🔄 Google response received');
     
     if (!response.credential) {
-      alert('❌ Google Sign-In failed: No credential received');
+      toast.error('❌ Google Sign-In failed: No credential received');
       return;
     }
 
@@ -129,7 +130,7 @@ const Auth = () => {
       if (res.data.success) {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
-        alert('✅ Google login successful! Welcome to StudyMate.');
+        toast.success('Google login successful! Welcome to StudyMate.');
         navigate('/dashboard');
       } else {
         throw new Error(res.data.message || 'Google login failed');
@@ -137,7 +138,7 @@ const Auth = () => {
     } catch (error) {
       console.error('❌ Google login error:', error);
       const errorMsg = error.response?.data?.message || error.message || 'Google login failed';
-      alert(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -151,46 +152,47 @@ const Auth = () => {
     setShowConfirmPassword(false);
   };
 
-  // Frontend validation
+  // Frontend validation (your original code)
   const validateForm = () => {
-    const newErrors = {};
+  const newErrors = {};
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
-    // Signup validation
-    if (isSignup) {
-      if (!formData.fullName.trim()) {
-        newErrors.fullName = 'Full name is required';
-      } else if (formData.fullName.length < 2) {
-        newErrors.fullName = 'Name must be at least 2 characters';
-      }
+  // Signup validation
+  if (isSignup) {
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    } else if (formData.fullName.length < 2) {
+      newErrors.fullName = 'Name must be at least 2 characters';
     }
+  }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+  // Email validation
+  if (!formData.email) {
+    newErrors.email = 'Email is required';
+  } else if (!emailRegex.test(formData.email)) { // Fixed this line
+    newErrors.email = 'Please enter a valid email';
+  }
+
+  // Password validation
+  if (!formData.password) {
+    newErrors.password = 'Password is required';
+  } else if (!passwordRegex.test(formData.password)) {
+    newErrors.password = 'Password must contain at least one letter, one number, and one special character';
+  }
+
+  // Confirm password validation (only for signup)
+  if (isSignup) {
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
+  }
 
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    // Confirm password validation (only for signup)
-    if (isSignup) {
-      if (!formData.confirmPassword) {
-        newErrors.confirmPassword = 'Please confirm your password';
-      } else if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -222,7 +224,7 @@ const Auth = () => {
         });
 
         if (response.data.success) {
-          alert('✅ Registration successful! Please login to continue.');
+          toast.success('Registration successful! Please login to continue.');
           // Switch to login form
           setIsSignup(false);
           setFormData({ fullName: '', email: formData.email, password: '', confirmPassword: '' });
@@ -239,7 +241,7 @@ const Auth = () => {
           localStorage.setItem('token', response.data.token);
           localStorage.setItem('user', JSON.stringify(response.data.user));
           
-          alert('✅ Login successful! Welcome to StudyMate.');
+          toast.success('Login successful! Welcome to StudyMate.');
           navigate('/dashboard');
         }
       }
@@ -256,64 +258,40 @@ const Auth = () => {
         setErrors(backendErrors);
       } else {
         const errorMsg = error.response?.data?.message || 'Something went wrong';
-        alert(`❌ ${errorMsg}`);
+        toast.error(errorMsg);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Enhanced Google Auth Handler
+  // Simple working Google auth
   const handleGoogleAuth = () => {
-  console.log('🔄 Google Auth button clicked');
+    console.log('🔄 Google Auth button clicked');
+    console.log('Google ready:', googleReady);
 
-  if (!googleReady) {
-    alert('⏳ Google Sign-In is loading. Please wait and try again.');
-    return;
-  }
-
-  if (window.google?.accounts?.id) {
-    try {
-      // Create a proper button container
-      const buttonContainer = document.getElementById('google-signin-fallback-' + (isSignup ? 'signup' : 'login'));
-      if (buttonContainer) {
-        buttonContainer.innerHTML = '';
-        
-        // Render with proper pixel width (not percentage)
-        window.google.accounts.id.renderButton(buttonContainer, {
-          theme: 'outline',
-          size: 'large',
-          width: 320, // ✅ Use pixels, not percentage
-          text: 'signin_with',
-          shape: 'rectangular'
-        });
-      } else {
-        // Direct prompt as fallback
-        window.google.accounts.id.prompt();
-      }
-    } catch (error) {
-      console.error('❌ Google auth error:', error);
-      // Fallback to direct popup (might get blocked)
-      window.open(
-        `https://accounts.google.com/oauth/authorize?client_id=${import.meta.env.VITE_GOOGLE_CLIENT_ID}&response_type=code&scope=openid email profile&redirect_uri=${window.location.origin}`,
-        'googleSignIn',
-        'width=500,height=600,scrollbars=yes,resizable=yes'
-      );
+    if (!googleReady) {
+      toast.error('⏳ Google Sign-In is loading. Please wait and try again.');
+      return;
     }
-  }
-};
 
+    if (window.google?.accounts?.id) {
+      try {
+        console.log('📱 Prompting Google Sign-In...');
+        window.google.accounts.id.prompt();
+      } catch (error) {
+        console.error('❌ Google prompt error:', error);
+        toast.error('❌ Failed to open Google Sign-In. Please try again.');
+      }
+    } else {
+      console.error('❌ Google SDK not properly loaded');
+      toast.error('❌ Google Sign-In is not available. Please refresh and try again.');
+    }
+  };
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
-      
-      {/* Debug info in development */}
-      {import.meta.env.DEV && (
-        <div className="fixed bottom-4 right-4 z-50 bg-gray-800 text-white p-2 rounded text-xs">
-          Google: {googleReady ? '✅' : '❌'} | 
-          Client ID: {import.meta.env.VITE_GOOGLE_CLIENT_ID ? '✅' : '❌'}
-        </div>
-      )}
+    <Toaster position="top-center" />
 
       {/* Back to Home Button */}
       <button
@@ -468,43 +446,42 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-4">
-  {/* Manual trigger button */}
-  <button
-    type="button"
-    onClick={handleGoogleAuth}
-    disabled={loading || !googleReady}
-    className={`w-full py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 transform hover:scale-105 ${
-      googleReady 
-        ? 'bg-white text-gray-800 hover:bg-gray-100' 
-        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-    } ${loading ? 'opacity-50' : ''}`}
-  >
-    {!googleReady ? (
-      <>
-        <div className="animate-spin w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full"></div>
-        Loading Google...
-      </>
-    ) : (
-      <>
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Continue with Google
-      </>
-    )}
-  </button>
+                  {/* Manual trigger button */}
+                  <button
+                    type="button"
+                    onClick={handleGoogleAuth}
+                    disabled={loading || !googleReady}
+                    className={`w-full py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 transform hover:scale-105 ${
+                      googleReady 
+                        ? 'bg-white text-gray-800 hover:bg-gray-100' 
+                        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                    } ${loading ? 'opacity-50' : ''}`}
+                  >
+                    {!googleReady ? (
+                      <>
+                        <div className="animate-spin w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+                        Loading Google...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continue with Google
+                      </>
+                    )}
+                  </button>
 
-  {/* Google's native button container */}
-  <div 
-    id="google-signin-fallback-signup" 
-    className="w-full flex justify-center"
-    style={{ minHeight: '44px' }}
-  ></div>
-</div>
-
+                  {/* Google's native button container */}
+                  {/* <div 
+                    id="google-signin-fallback-signup" 
+                    className="w-full flex justify-center"
+                    style={{ minHeight: '44px' }}
+                  ></div> */}
+                </div>
 
                 <div className="text-center">
                   <p className="text-gray-400">
@@ -720,7 +697,7 @@ const Auth = () => {
                   </button>
 
                   {/* Fallback Google Button Container */}
-                  <div id="google-signin-fallback-login" className="w-full"></div>
+                  {/* <div id="google-signin-fallback-login" className="w-full"></div> */}
                 </div>
 
                 <div className="text-center">

@@ -19,7 +19,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Rate limiting
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 1* 60 * 1000, // 15 minutes
   max: 5,
   message: {
     success: false,
@@ -40,13 +40,13 @@ const googleAuth = async (req, res) => {
         message: 'No token provided'
       });
     }
-
+    console.log('Token generated: ', token);
     // Verify the Google token using the initialized client
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-    
+    console.log('Token generated: ', token);
     const payload = ticket.getPayload();
     console.log('✅ Token verified for:', payload.email);
     

@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import connectDB from './config/database.js'; // Add this import
+import connectDB from './config/database.js'; 
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -10,6 +10,9 @@ import youtubeRoute from './routes/youtube.js';
 import uploadRoute from './routes/upload.js';
 import summarizeRoutes from './routes/summarize.js';
 import pdfSummaryRoute from './routes/pdfSummary.js';
+import generateAnswerRoute from './routes/generate-answer.js';
+import generateFlashcardRoute from './routes/generate-flashcard.js'; 
+import expoortFlashcardRoute from './routes/export-flashcards.js';
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +45,9 @@ app.use('/api', youtubeRoute);
 app.use('/api/upload', uploadRoute);
 app.use('/api/summarize', summarizeRoutes);
 app.use('/api/pdf-summary', pdfSummaryRoute);
+app.use("/api/generate-answer", generateAnswerRoute);
+app.use("/api/generate-flashcards", generateFlashcardRoute);
+app.use("/api/export-flashcards", expoortFlashcardRoute);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -102,6 +108,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📊 Database: MongoDB`);
   console.log(`🔗 Frontend URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
 });

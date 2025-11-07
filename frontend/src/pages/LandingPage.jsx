@@ -450,6 +450,183 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+      {/* Pricing Section */}
+<section id="pricing" className="py-24 px-6 lg:px-8 relative z-10">
+  <div className="max-w-6xl mx-auto">
+    <div className="text-center mb-16">
+      <h2 className="text-6xl font-light tracking-tight mb-4 hover:text-emerald-100 transition-colors duration-300 cursor-default">
+        <em>Choose</em> your plan
+      </h2>
+      <p className="text-gray-400 text-lg font-light hover:text-gray-300 transition-colors duration-300 cursor-default">
+        Start free, upgrade when you're ready to unlock your full potential
+      </p>
+    </div>
+
+    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+      {/* Free Plan */}
+      <div className="group relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-cyan-500/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-sm" />
+        
+        <div className="relative border border-white/10 rounded-2xl p-8 group-hover:border-blue-400/30 group-hover:rounded-3xl transition-all duration-500 transform group-hover:scale-[1.02] group-hover:shadow-2xl backdrop-blur-sm">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-light text-white mb-2 group-hover:text-blue-100 transition-colors duration-300">
+              Free
+            </h3>
+            <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
+              Perfect to get started
+            </p>
+            <div className="mt-6">
+              <span className="text-4xl font-light text-white group-hover:text-blue-100 transition-colors duration-300">₹0</span>
+              <span className="text-gray-500 text-lg group-hover:text-gray-400 transition-colors duration-300">/month</span>
+            </div>
+          </div>
+
+          <ul className="space-y-4 mb-8">
+            {[
+              "20 documents per month",
+              "Basic AI summarization", 
+              "Simple Q&A assistance",
+              "5 flashcard sets",
+              "Text-to-speech",
+              "Export to PDF",
+              "Community support"
+            ].map((feature, index) => (
+              <li key={index} className="flex items-center text-sm text-gray-300 group-hover:text-white transition-colors duration-300">
+                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-3 group-hover:bg-blue-300 transition-colors duration-300"></div>
+                {feature}
+              </li>
+            ))}
+          </ul>
+
+          <button 
+            onClick={() => navigate('/auth')}
+            className="w-full border border-white/20 text-white px-6 py-3 rounded-xl font-medium hover:border-blue-400/50 hover:bg-blue-500/10 hover:text-blue-200 hover:rounded-2xl transition-all duration-300"
+          >
+            Start Free
+          </button>
+        </div>
+      </div>
+
+      {/* Pro Plan - Most Popular */}
+      <div className="group relative">
+        {/* Popular Badge */}
+        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="bg-gradient-to-r from-purple-500 to-violet-500 text-white px-4 py-1 rounded-full text-xs font-medium group-hover:from-purple-400 group-hover:to-violet-400 transition-all duration-300">
+            Most Popular
+          </div>
+        </div>
+
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-violet-500/5 to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-sm" />
+        
+        <div className="relative border border-purple-400/30 rounded-2xl p-8 group-hover:border-purple-400/50 group-hover:rounded-3xl transition-all duration-500 transform group-hover:scale-[1.05] group-hover:shadow-2xl group-hover:shadow-purple-500/20 backdrop-blur-sm">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-light text-white mb-2 group-hover:text-purple-100 transition-colors duration-300">
+              Pro
+            </h3>
+            <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
+              For serious students
+            </p>
+            <div className="mt-6">
+              <span className="text-4xl font-light text-white group-hover:text-purple-100 transition-colors duration-300">₹59</span>
+              <span className="text-gray-500 text-lg group-hover:text-gray-400 transition-colors duration-300">/month</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 group-hover:text-gray-400 transition-colors duration-300">
+              Billed annually: ₹699/year (2 months free)
+            </p>
+          </div>
+
+          <ul className="space-y-4 mb-8">
+            {[
+              "Unlimited documents",
+              "Advanced AI summarization",
+              "Unlimited Q&A assistance", 
+              "Unlimited flashcards & MCQs",
+              "Unlimited text-to-speech",
+              "AI-generated mind maps",
+              "Priority processing",
+              "Export to PDF/Word/Text",
+              "Priority email support"
+            ].map((feature, index) => (
+              <li key={index} className="flex items-center text-sm text-gray-300 group-hover:text-white transition-colors duration-300">
+                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-3 group-hover:bg-purple-300 transition-colors duration-300"></div>
+                {feature}
+              </li>
+            ))}
+          </ul>
+
+          <button 
+            onClick={() => navigate('/auth')}
+            className="w-full bg-gradient-to-r from-purple-500 to-violet-500 text-white px-6 py-3 rounded-xl font-medium hover:from-purple-400 hover:to-violet-400 hover:shadow-lg hover:shadow-purple-500/30 hover:rounded-2xl transition-all duration-300"
+          >
+            Upgrade to Pro
+          </button>
+        </div>
+      </div>
+
+      {/* Enterprise Plan */}
+      <div className="group relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-teal-500/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-sm" />
+        
+        <div className="relative border border-white/10 rounded-2xl p-8 group-hover:border-emerald-400/30 group-hover:rounded-3xl transition-all duration-500 transform group-hover:scale-[1.02] group-hover:shadow-2xl backdrop-blur-sm">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-light text-white mb-2 group-hover:text-emerald-100 transition-colors duration-300">
+              Enterprise
+            </h3>
+            <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
+              For institutions & teams
+            </p>
+            <div className="mt-6">
+              <span className="text-4xl font-light text-white group-hover:text-emerald-100 transition-colors duration-300">Custom</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 group-hover:text-gray-400 transition-colors duration-300">
+              Contact us for pricing
+            </p>
+          </div>
+
+          <ul className="space-y-4 mb-8">
+            {[
+              "Everything in Pro",
+              "Custom AI model training",
+              "Advanced analytics dashboard", 
+              "Team collaboration tools",
+              "SSO & advanced security",
+              "API access",
+              "Custom integrations",
+              "Dedicated account manager",
+              "24/7 phone support"
+            ].map((feature, index) => (
+              <li key={index} className="flex items-center text-sm text-gray-300 group-hover:text-white transition-colors duration-300">
+                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-3 group-hover:bg-emerald-300 transition-colors duration-300"></div>
+                {feature}
+              </li>
+            ))}
+          </ul>
+
+          <button 
+            onClick={() => window.open('mailto:enterprise@studymate.ai', '_blank')}
+            className="w-full border border-white/20 text-white px-6 py-3 rounded-xl font-medium hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:text-emerald-200 hover:rounded-2xl transition-all duration-300"
+          >
+            Contact Sales
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Money-back guarantee */}
+    <div className="text-center mt-16">
+      <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/[0.08] hover:border-white/20 hover:rounded-3xl transition-all duration-300 group cursor-default">
+        <div className="w-6 h-6 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <span className="text-gray-300 text-sm group-hover:text-white transition-colors duration-300">
+          30-day money-back guarantee • Cancel anytime
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Testimonials */}
       <section id="testimonials" className="py-24 px-6 lg:px-8 relative z-10">

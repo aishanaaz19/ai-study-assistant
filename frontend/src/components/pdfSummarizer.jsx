@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { jsPDF } from "jspdf";
 import { Document, Packer, Paragraph, TextRun } from "docx";
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export default function PdfSummarizer() {
   const [file, setFile] = useState(null);
@@ -11,11 +12,21 @@ export default function PdfSummarizer() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [summaryWordLimit, setSummaryWordLimit] = useState(200);
   const [message, setMessage] = useState({ text: '', type: '' });
+  
+  // New states for Q&A functionality
+  const [suggestedQuestions, setSuggestedQuestions] = useState([]);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [loadingAnswer, setLoadingAnswer] = useState(false);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
     setSummary("");
     setError("");
+    // Clear Q&A when new file is selected
+    setSuggestedQuestions([]);
+    setChatHistory([]);
+    setSelectedQuestion(null);
   };
 
   const handleWordLimitChange = (event) => {
@@ -36,6 +47,90 @@ export default function PdfSummarizer() {
     }, 3000);
   };
 
+  // Generate suggested questions based on summary
+  const generateSuggestedQuestions = async (summary) => {
+  try {
+    // First try to get AI-generated questions from backend
+    const response = await axios.post('http://localhost:3000/api/generate-questions', {
+      summary,
+      count: 5 // Number of questions to generate
+    });
+
+    if (response.data.questions) {
+      setSuggestedQuestions(response.data.questions);
+    } else {
+      // Fallback to default questions if API fails
+      const defaultQuestions = [
+        "What are the main key points discussed in this document?",
+        "Can you explain the most important concepts mentioned?",
+        "What are the practical applications of this information?",
+        "How does this relate to current industry trends?",
+        "What are the key takeaways for exam preparation?"
+      ];
+      setSuggestedQuestions(defaultQuestions);
+    }
+  } catch (error) {
+    console.error('Failed to generate questions:', error);
+    // Fallback questions in case of API failure
+    const fallbackQuestions = [
+      "What are the main key points discussed in this document?",
+      "Can you explain the most important concepts mentioned?",
+      "What are the practical applications of this information?",
+      "How does this relate to current industry trends?",
+      "What are the key takeaways for exam preparation?"
+    ];
+    setSuggestedQuestions(fallbackQuestions);
+  }
+};
+
+  // Handle question click and generate answer
+  const handleQuestionClick = async (question, index) => {
+    setSelectedQuestion(index);
+    setLoadingAnswer(true);
+    
+    // Add user question to chat
+    const userMessage = {
+      type: 'user',
+      content: question,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    
+    setChatHistory(prev => [...prev, userMessage]);
+    
+    try {
+      // Call your backend API to generate answer based on PDF content and question
+      const response = await axios.post("http://localhost:3000/api/generate-answer", {
+        summary: summary,
+        question: question,
+        fileName: file?.name
+      });
+      
+      const aiResponse = {
+        type: 'ai',
+        content: response.data.answer,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      
+      setChatHistory(prev => [...prev, aiResponse]);
+    } catch (error) {
+      // Fallback to a generic answer if API fails
+      const fallbackAnswer = {
+        type: 'ai',
+        content: `Based on the document summary, regarding "${question}": 
+
+${summary.length > 200 ? summary.substring(0, 200) + '...' : summary}
+
+I'd be happy to elaborate further if you have more specific questions! Please note that this is a basic response - for more detailed answers, make sure your backend API is properly configured.`,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      
+      setChatHistory(prev => [...prev, fallbackAnswer]);
+      console.error("Error generating answer:", error);
+    } finally {
+      setLoadingAnswer(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!file) {
       setError("Please upload a PDF file.");
@@ -51,6 +146,9 @@ export default function PdfSummarizer() {
       setSummary("");
       setError("");
       showMessage('', '');
+      // Clear previous Q&A
+      setSuggestedQuestions([]);
+      setChatHistory([]);
 
       const res = await axios.post("http://localhost:3000/api/pdf-summary", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -58,8 +156,12 @@ export default function PdfSummarizer() {
 
       setSummary(res.data.summary);
       showMessage("✅ Summary generated successfully!", "success");
-    } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message;
+      
+      // Generate suggested questions after successful summarization
+      generateSuggestedQuestions(res.data.summary);
+      
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.message;
       setError("❌ Failed to summarize. " + errorMessage);
       showMessage("❌ Failed to summarize.", "error");
     } finally {
@@ -113,9 +215,9 @@ export default function PdfSummarizer() {
       link.download = "summary.docx";
       link.click();
       showMessage("✅ Summary downloaded as DOCX!", "success");
-    } catch (err) {
+    } catch (error) {
       showMessage("❌ Failed to download DOCX.", "error");
-      console.error("DOCX download error:", err);
+      console.error("DOCX download error:", error);
     }
   };
 
@@ -127,15 +229,15 @@ export default function PdfSummarizer() {
     try {
       await navigator.clipboard.writeText(summary);
       showMessage("✅ Summary copied to clipboard!", "success");
-    } catch (err) {
+    } catch (error) {
       showMessage("❌ Failed to copy summary.", "error");
-      console.error("Copy error:", err);
+      console.error("Copy error:", error);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white px-4 py-10 flex flex-col items-center">
-      <div className="w-full max-w-3xl p-6 rounded-2xl bg-gray-800 shadow-lg">
+      <div className="w-full max-w-6xl p-6 rounded-2xl bg-gray-800 shadow-lg">
         <h1 className="text-3xl font-bold mb-6 text-center">📚 AI Study Assistant</h1>
 
         {/* Custom Message Box */}
@@ -233,6 +335,97 @@ export default function PdfSummarizer() {
                 )}
               </div>
             </div>
+
+            {/* Interactive Q&A Section */}
+            {suggestedQuestions.length > 0 && (
+              <div className="mt-8 grid lg:grid-cols-2 gap-6">
+                {/* Suggested Questions Panel */}
+                <div className="bg-gray-700 rounded-lg p-6">
+                  <h3 className="text-xl font-bold mb-4 flex items-center">
+                    🤔 Ask Questions About Your Document
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    {suggestedQuestions.map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleQuestionClick(question, index)}
+                        className={`w-full text-left p-3 rounded-lg border-2 transition-all duration-300 hover:shadow-md ${
+                          selectedQuestion === index
+                            ? 'border-indigo-500 bg-indigo-900/30'
+                            : 'border-gray-600 hover:border-indigo-400 bg-gray-800'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-white">{question}</span>
+                          <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Chat Interface Panel */}
+                <div className="bg-gray-700 rounded-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4">
+                    <h4 className="font-semibold">💬 AI Study Chat</h4>
+                    <p className="text-sm opacity-90">Click any question to start learning!</p>
+                  </div>
+                  
+                  <div className="h-80 overflow-y-auto p-4 space-y-4 bg-gray-800">
+                    {chatHistory.length === 0 ? (
+                      <div className="text-center text-gray-400 mt-16">
+                        <div className="text-4xl mb-4">🤖</div>
+                        <p>Click on any suggested question to start the conversation!</p>
+                      </div>
+                    ) : (
+                      <>
+                        {chatHistory.map((message, index) => (
+                          <div
+                            key={index}
+                            className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+                                message.type === 'user'
+                                  ? 'bg-indigo-600 text-white rounded-br-none'
+                                  : 'bg-gray-600 text-white rounded-bl-none'
+                              }`}
+                            >
+                              <div className="flex items-start space-x-2">
+                                <div>
+                                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                  <p className={`text-xs mt-1 ${
+                                    message.type === 'user' ? 'text-indigo-100' : 'text-gray-300'
+                                  }`}>
+                                    {message.timestamp}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {loadingAnswer && (
+                          <div className="flex justify-start">
+                            <div className="bg-gray-600 text-white rounded-lg rounded-bl-none px-4 py-3 max-w-xs">
+                              <div className="flex items-center space-x-2">
+                                <div className="flex space-x-1">
+                                  <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                                </div>
+                                <span className="text-xs">AI is thinking...</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

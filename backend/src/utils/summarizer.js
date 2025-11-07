@@ -6,8 +6,6 @@ dotenv.config(); // Load environment variables from .env file
 const API_KEY = process.env.GEMINI_API_KEY;
 if (!API_KEY) {
   console.error('GEMINI_API_KEY is not set in environment variables!');
-  // In a production app, you might want to throw an error here to prevent the server from starting
-  // For development, we'll log and proceed, but API calls will fail without the key.
 }
 
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -21,21 +19,37 @@ const genAI = new GoogleGenerativeAI(API_KEY);
  */
 export async function generateAIContent(text, contentType, wordLimit = null) { // Added wordLimit parameter
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     let prompt = '';
     let generationConfig = {};
 
     switch (contentType) {
       case 'summary':
         // Modified prompt to include word limit
-        prompt = `Please summarize the following text comprehensively, highlighting the main points and key information. Ensure the summary is concise yet informative and approximately ${wordLimit || '200'} words long.
+        prompt = `Analyze the following PDF content and provide a structured summary with the following format:
 
-        Text to summarize:
-        """
-        ${text}
-        """
+          **OVERVIEW:** (3-4 sentences describing what this document is about)
 
-        Summary:`;
+          **KEY HIGHLIGHTS:**
+          • [Most important point 1]
+          • [Most important point 2] 
+          • [Most important point 3]
+          • [Most important point 4]
+
+          **KEY INSIGHTS:**
+          • [Critical insight or conclusion 1]
+          • [Critical insight or conclusion 2]
+          • [Critical insight or conclusion 3]
+
+          **MAIN TAKEAWAYS:**
+          • [Actionable takeaway 1]
+          • [Actionable takeaway 2]
+          • [Actionable takeaway 3]
+
+          Content to analyze: ${text}
+
+          Word limit: approximately ${wordLimit} words total.
+          `;
         break;
 
       case 'mindmap':
@@ -95,7 +109,7 @@ export async function generateAIContent(text, contentType, wordLimit = null) { /
         break;
 
       case 'flashcards':
-        prompt = `Generate a JSON array of flashcards from the following text. Each flashcard should be an object with a 'term' (question/concept) and a 'definition' (answer/explanation). Focus on key vocabulary, concepts, and facts. Ensure the JSON is valid and can be directly parsed.
+        prompt = `Generate 10 flashcards from the following text. Each flashcard should be an object with a 'term' (question/concept) and a 'definition' (answer/explanation). Focus on key vocabulary, concepts, and facts. Ensure the JSON is valid and can be directly parsed.
 
         Example JSON Structure:
         [
@@ -165,7 +179,12 @@ export async function generateAIContent(text, contentType, wordLimit = null) { /
         };
         break;
 
-      default:
+      case 'answer':
+        prompt = text;
+        break;
+
+
+        default:
         throw new Error(`Unsupported content type: ${contentType}`);
     }
 

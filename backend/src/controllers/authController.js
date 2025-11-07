@@ -2,9 +2,6 @@ import User from '../models/User.js';
 import { generateToken } from '../utils/jwt.js';
 import { validationResult } from 'express-validator';
 
-// @desc    Register user
-// @route   POST /api/auth/register
-// @access  Public
 export const register = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -57,9 +54,6 @@ export const register = async (req, res) => {
   }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
 export const login = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -116,9 +110,6 @@ export const login = async (req, res) => {
   }
 };
 
-// @desc    Get current user
-// @route   GET /api/auth/me
-// @access  Private
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -142,9 +133,6 @@ export const getMe = async (req, res) => {
   }
 };
 
-// @desc    Get user's summary history
-// @route   GET /api/auth/summaries
-// @access  Private
 export const getSummaryHistory = async (req, res) => {
   try {
     const { limit = 10 } = req.query;
@@ -165,13 +153,9 @@ export const getSummaryHistory = async (req, res) => {
     });
   }
 };
-// @desc    Logout user
-// @route   POST /api/auth/logout
-// @access  Private
+
 export const logout = async (req, res) => {
   try {
-    // For JWT-based auth, logout is typically handled client-side
-    // by removing the token from localStorage/cookies
     res.status(200).json({
       success: true,
       message: 'User logged out successfully'
