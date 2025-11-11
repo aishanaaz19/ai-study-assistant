@@ -170,7 +170,7 @@ const FlashcardGenerator = ({ pdfState, showMessage }) => {
         </p>
       </div>
 
-      <div className="p-6">
+      <div className="p-6 bg-gray-950 dark:bg-white">
         {/* Generate Button Section */}
         {flashcards.length === 0 && (
           <div className="text-center mb-6">

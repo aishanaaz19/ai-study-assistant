@@ -12,7 +12,8 @@ import summarizeRoutes from './routes/summarize.js';
 import pdfSummaryRoute from './routes/pdfSummary.js';
 import generateAnswerRoute from './routes/generate-answer.js';
 import generateFlashcardRoute from './routes/generate-flashcard.js'; 
-import expoortFlashcardRoute from './routes/export-flashcards.js';
+import exportFlashcardRoute from './routes/export-flashcards.js';
+import generateMindmapRoute from './routes/generate-mindmap.js';
 
 // Load environment variables
 dotenv.config();
@@ -47,7 +48,8 @@ app.use('/api/summarize', summarizeRoutes);
 app.use('/api/pdf-summary', pdfSummaryRoute);
 app.use("/api/generate-answer", generateAnswerRoute);
 app.use("/api/generate-flashcards", generateFlashcardRoute);
-app.use("/api/export-flashcards", expoortFlashcardRoute);
+app.use("/api/export-flashcards", exportFlashcardRoute);
+app.use("/api/generate-mindmap", generateMindmapRoute);
 
 // Health check
 app.get('/api/health', (req, res) => {
