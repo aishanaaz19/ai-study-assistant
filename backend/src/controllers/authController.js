@@ -133,6 +133,20 @@ export const getMe = async (req, res) => {
   }
 };
 
+// PATCH /api/users/me
+export const editMe = async (req, res) => {
+  try {
+    const updates = {};
+    if (req.body.name) updates.name = req.body.name;
+    if (req.body.profilePicture) updates.profilePicture = req.body.profilePicture;
+    // ... other fields
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true });
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Profile update failed" });
+  }
+};
+
 export const getSummaryHistory = async (req, res) => {
   try {
     const { limit = 10 } = req.query;

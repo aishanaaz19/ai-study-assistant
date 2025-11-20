@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, Brain, MessageSquare, Zap } from 'lucide-react';
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -648,6 +649,15 @@ const Auth = () => {
                   {errors.password && (
                     <span className="text-red-400 text-sm mt-1 block">{errors.password}</span>
                   )}
+                  <div className="mt-1 text-right">
+                      {/* Add this line: */}
+                      <Link 
+                        to="/forgot-password" 
+                        className="text-blue-400 hover:underline text-sm"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
                 </div>
 
                 <button
@@ -661,6 +671,7 @@ const Auth = () => {
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-white/20"></div>
+                    
                   </div>
                   <div className="relative flex justify-center text-sm">
                     <span className="px-2 bg-black text-gray-400">or</span>

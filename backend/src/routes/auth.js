@@ -1,6 +1,8 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { OAuth2Client } from 'google-auth-library'; // ✅ Add this import
+import crypto from 'crypto';
+import { sendEmail } from '../utils/sendEmail.js';
+import { OAuth2Client } from 'google-auth-library';
 import { 
   register, 
   login, 
@@ -102,7 +104,7 @@ const googleAuth = async (req, res) => {
 // Public routes
 router.post('/register', authLimiter, validateRegister, register);
 router.post('/login', authLimiter, validateLogin, login);
-router.post('/google', googleAuth); // ✅ Google auth route
+router.post('/google', googleAuth); 
 
 // Protected routes
 router.get('/me', protect, getMe);

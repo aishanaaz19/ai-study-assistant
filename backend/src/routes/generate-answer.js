@@ -8,7 +8,7 @@ router.post("/", async (req, res) => {
   // Validate required fields
   if (!summary || !question) {
     return res.status(400).json({ 
-      error: "Missing 'summary' or 'question' in request body" 
+      error: "Missing 'summary' or 'question' in requesta body" 
     });
   }
 

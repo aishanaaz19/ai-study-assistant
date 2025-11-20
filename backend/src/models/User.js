@@ -49,7 +49,8 @@ const userSchema = new mongoose.Schema({
     sparse: true // Allows multiple null values
   },
   profilePicture: {
-    type: String
+    type: String,
+    default: '',
   },
   summaries: [summarySchema],
   isEmailVerified: {
@@ -59,7 +60,15 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },  
+    membershipPlan: {
+    type: String,
+    enum: ['free', 'pro'],
+    default: 'free',
+  },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
+
 });
 
 // Hash password before saving

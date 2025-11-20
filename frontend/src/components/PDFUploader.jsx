@@ -1,11 +1,12 @@
-// src/components/PDFUploader.jsx
 import React from 'react';
 import axios from "axios";
 import { useNavigate } from 'react-router-dom';
 import { FileText, Upload, Zap, AlertCircle } from 'lucide-react';
 
+
 const PDFUploader = ({ pdfState, setPdfState, setQaState, showMessage }) => {
   const navigate = useNavigate();
+
 
   const handleFileChange = (e) => {
     const newFile = e.target.files[0];
@@ -18,6 +19,7 @@ const PDFUploader = ({ pdfState, setPdfState, setQaState, showMessage }) => {
       showQASection: false
     });
   };
+
 
   const handleWordLimitChange = (event) => {
     const value = parseInt(event.target.value, 10);
@@ -33,6 +35,7 @@ const PDFUploader = ({ pdfState, setPdfState, setQaState, showMessage }) => {
     setPdfState(prev => ({ ...prev, summaryWordLimit: newLimit }));
   };
 
+
   const generateSuggestedQuestions = async (summaryText) => {
   try {
     const token = localStorage.getItem('token');
@@ -46,6 +49,7 @@ const PDFUploader = ({ pdfState, setPdfState, setQaState, showMessage }) => {
         }
       }
     );
+
 
     setQaState(prev => ({ 
       ...prev, 
@@ -62,6 +66,7 @@ const PDFUploader = ({ pdfState, setPdfState, setQaState, showMessage }) => {
   }
 };
 
+
 // Helper function to get default questions
 const getDefaultQuestions = () => [
   "What are the main key points discussed in this document?",
@@ -71,11 +76,13 @@ const getDefaultQuestions = () => [
   "What should I focus on for exam preparation?"
 ];
 
+
   const handleSubmit = async () => {
     if (!pdfState.file) {
       setPdfState(prev => ({ ...prev, error: "Please upload a PDF file." }));
       return;
     }
+
 
     const token = localStorage.getItem('token');
     
@@ -85,9 +92,11 @@ const getDefaultQuestions = () => [
       return;
     }
 
+
     const formData = new FormData();
     formData.append("pdfFile", pdfState.file);
     formData.append("wordLimit", pdfState.summaryWordLimit.toString());
+
 
     try {
       setPdfState(prev => ({ ...prev, loading: true, summary: "", error: "" }));
@@ -100,12 +109,14 @@ const getDefaultQuestions = () => [
         showQASection: false
       });
 
+
       const res = await axios.post("http://localhost:3000/api/pdf-summary", formData, {
         headers: { 
           "Content-Type": "multipart/form-data",
           "Authorization": `Bearer ${token}`
         },
       });
+
 
       setPdfState(prev => ({ ...prev, summary: res.data.summary }));
       showMessage("✅ Summary generated successfully!", "success");
@@ -123,6 +134,7 @@ const getDefaultQuestions = () => [
     }
   };
 
+
   const removeFile = () => {
     setPdfState(prev => ({ ...prev, file: null, summary: "", error: "" }));
     setQaState({
@@ -133,6 +145,7 @@ const getDefaultQuestions = () => [
       showQASection: false
     });
   };
+
 
   return (
     <div className="space-y-6">
@@ -191,6 +204,7 @@ const getDefaultQuestions = () => [
                 </div>
               </div>
 
+
               <div className="flex gap-3">
                 <button
                   onClick={handleSubmit}
@@ -222,6 +236,7 @@ const getDefaultQuestions = () => [
         </div>
       )}
 
+
       {/* Error Display */}
       {pdfState.error && (
         <div className="bg-red-500/10 dark:bg-red-50 border border-red-500/30 dark:border-red-200 text-red-300 dark:text-red-700 px-6 py-4 rounded-2xl flex items-center gap-3">
@@ -232,5 +247,6 @@ const getDefaultQuestions = () => [
     </div>
   );
 };
+
 
 export default PDFUploader;

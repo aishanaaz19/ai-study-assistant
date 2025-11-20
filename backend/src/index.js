@@ -14,6 +14,10 @@ import generateAnswerRoute from './routes/generate-answer.js';
 import generateFlashcardRoute from './routes/generate-flashcard.js'; 
 import exportFlashcardRoute from './routes/export-flashcards.js';
 import generateMindmapRoute from './routes/generate-mindmap.js';
+import ForgotPassword from './routes/forgotPassword.js';
+import ResetPassword from './routes/resetPassword.js';
+import webSummaryRoute from './routes/webSummary.js';
+import feedbackRoutes from './routes/feedback.js';
 
 // Load environment variables
 dotenv.config();
@@ -42,7 +46,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api', youtubeRoute);
 app.use('/api/upload', uploadRoute);
 app.use('/api/summarize', summarizeRoutes);
 app.use('/api/pdf-summary', pdfSummaryRoute);
@@ -50,6 +53,11 @@ app.use("/api/generate-answer", generateAnswerRoute);
 app.use("/api/generate-flashcards", generateFlashcardRoute);
 app.use("/api/export-flashcards", exportFlashcardRoute);
 app.use("/api/generate-mindmap", generateMindmapRoute);
+app.use('/api/auth/forgot-password', ForgotPassword);
+app.use('/api/auth/reset-password', ResetPassword);
+app.use('/api/web-summary', webSummaryRoute);
+app.use('/api', youtubeRoute);
+app.use('/api/feedback', feedbackRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

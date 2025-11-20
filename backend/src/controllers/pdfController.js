@@ -2,6 +2,7 @@ import fs from 'fs';
 import pdfParse from 'pdf-parse-debugging-disabled';
 import path from 'path';
 
+
 export const extractTextFromPDF = async (req, res) => {
   try {
     // Enhanced validation
@@ -9,6 +10,7 @@ export const extractTextFromPDF = async (req, res) => {
       console.log("❌ No file object found in request");
       return res.status(400).json({ error: 'No file uploaded.' });
     }
+
 
     console.log("📂 File object:", req.file);
     
@@ -20,7 +22,9 @@ export const extractTextFromPDF = async (req, res) => {
       return res.status(400).json({ error: 'File path not available.' });
     }
 
+
     console.log("📂 File path to read:", filePath);
+
 
     // Check if file exists before attempting to read
     if (!fs.existsSync(filePath)) {
@@ -34,6 +38,7 @@ export const extractTextFromPDF = async (req, res) => {
         req.file.buffer ? null : path.join(process.cwd(), filePath)
       ].filter(Boolean);
 
+
       let validPath = null;
       for (const altPath of alternativePaths) {
         if (fs.existsSync(altPath)) {
@@ -42,6 +47,7 @@ export const extractTextFromPDF = async (req, res) => {
           break;
         }
       }
+
 
       if (!validPath) {
         return res.status(400).json({ 
@@ -52,6 +58,7 @@ export const extractTextFromPDF = async (req, res) => {
       
       filePath = validPath;
     }
+
 
     // Read file - handle both buffer and file path scenarios
     let dataBuffer;
@@ -64,6 +71,7 @@ export const extractTextFromPDF = async (req, res) => {
       console.log("📁 Reading file from disk:", filePath);
       dataBuffer = fs.readFileSync(filePath);
     }
+
 
     // Parse PDF
     console.log("🔍 Parsing PDF...");
@@ -80,6 +88,7 @@ export const extractTextFromPDF = async (req, res) => {
       }
     });
 
+
     // Optional cleanup for disk storage
     if (!req.file.buffer && fs.existsSync(filePath)) {
       try {
@@ -89,6 +98,7 @@ export const extractTextFromPDF = async (req, res) => {
         console.warn("⚠️ Failed to cleanup temporary file:", cleanupErr.message);
       }
     }
+
 
   } catch (err) {
     console.error("❌ PDF parsing error:", err.message);

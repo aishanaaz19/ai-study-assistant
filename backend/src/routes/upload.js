@@ -4,14 +4,18 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { extractTextFromPDF } from '../controllers/pdfController.js';
 
+
 const router = express.Router();
+
 
 // __dirname replacement
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
 // Upload folder path
 const uploadPath = path.resolve(__dirname, '../uploads');
+
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -23,8 +27,11 @@ const storage = multer.diskStorage({
   }
 });
 
+
 const upload = multer({ storage });
+
 
 router.post('/', upload.single('file'), extractTextFromPDF);
 
-export default router;
+
+export default router; 

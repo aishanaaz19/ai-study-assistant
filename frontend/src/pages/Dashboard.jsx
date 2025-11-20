@@ -14,15 +14,22 @@ import InteractiveQA from '../components/InteractiveQA.jsx';
 import PlaceholderSection from '../components/PlaceholderSection.jsx';
 import FlashcardGenerator from '../components/FlashcardGenerator.jsx';
 import MindMapView from '../components/MindMapView.jsx';
+import YoutubeTranscript from '../components/YoutubeTranscript.jsx';
+import LinkSummarizer from '../components/LinkSummarizer.jsx';
+import FeedbackForm from '../components/FeedbackForm.jsx';
+// import YouTubeDialog from '../components/YoutubeDialog.jsx';
+
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
+
   // Navigation state
   const [activeSection, setActiveSection] = useState('create');
   const [activeTab, setActiveTab] = useState('file');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
 
   // PDF processing state
   const [pdfState, setPdfState] = useState({
@@ -33,6 +40,7 @@ const Dashboard = () => {
     summaryWordLimit: 200
   });
 
+
   // Q&A state
   const [qaState, setQaState] = useState({
     suggestedQuestions: [],
@@ -42,14 +50,17 @@ const Dashboard = () => {
     showQASection: false
   });
 
+
   // UI state
   const [showDropdown, setShowDropdown] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+
 
   // Section refs for scrolling
   const summaryRef = useRef(null);
   const flashcardsRef = useRef(null);
   const mindmapRef = useRef(null);
+
 
   // Auth logic
   useEffect(() => {
@@ -76,6 +87,7 @@ const Dashboard = () => {
     checkAuth();
   }, [navigate]);
 
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -84,10 +96,12 @@ const Dashboard = () => {
     navigate('/auth');
   };
 
+
   const showMessage = (text, type) => {
     setMessage({ text, type });
     setTimeout(() => setMessage({ text: '', type: '' }), 3000);
   };
+
 
   // Scrolling logic
   const scrollToSection = (ref) => {
@@ -96,10 +110,12 @@ const Dashboard = () => {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gray-950 dark:bg-gray-50 text-white dark:text-gray-900 relative overflow-visible">
       <StarryBackground />
       <Navbar user={user} onLogout={handleLogout} />
+
 
       <div className="pt-16 flex h-screen">
         <DashboardSidebar 
@@ -116,12 +132,14 @@ const Dashboard = () => {
             <DashboardHeader />
             <MessageDisplay message={message} />
 
+
             {activeSection === 'create' && (
               <div className="space-y-6">
                 <ContentTabs 
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
                 />
+
 
                 {activeTab === 'file' && (
                   <>
@@ -131,6 +149,7 @@ const Dashboard = () => {
                       setQaState={setQaState}
                       showMessage={showMessage}
                     />
+
 
                     {/* Summary section with ref */}
                     <div ref={summaryRef}>
@@ -157,12 +176,14 @@ const Dashboard = () => {
                       </div>
                     </div>
 
+
                     {/* Interactive Q&A section */}
                     <InteractiveQA 
                       pdfState={pdfState}
                       qaState={qaState}
                       setQaState={setQaState}
                     />
+
 
                     {/* Flashcards section with ref */}
                     <div ref={flashcardsRef}>
@@ -171,6 +192,7 @@ const Dashboard = () => {
                         showMessage={showMessage}
                       />
                     </div>
+
 
                     {/* Mind Map section with ref */}
                     <div ref={mindmapRef}>
@@ -181,13 +203,37 @@ const Dashboard = () => {
                     </div>
                   </>
                 )}
+                
+                {activeTab === 'youtube' && (
+                  <YoutubeTranscript />
+                  // <YouTubeDialog />
+                )}
+
+
+                {activeTab === 'link' && (
+                  <div className="space-y-6">
+                    <LinkSummarizer />
+                    {/* ...rest of your dashboard create section... */}
+                  </div>
+                )}
+
+
               </div>
             )}
 
-            <PlaceholderSection activeSection={activeSection} />
+            {/* Feedback Section */}
+            {activeSection === 'feedback' && (
+              <FeedbackForm />
+            )}
+
+            {/* Other sections */}
+            {activeSection !== 'create' && activeSection !== 'feedback' && (
+              <PlaceholderSection activeSection={activeSection} />
+            )}
           </div>
         </div>
       </div>
+
 
       {/* Custom Styles */}
       <style jsx>{`
@@ -236,5 +282,6 @@ const Dashboard = () => {
     </div>
   );
 };
+
 
 export default Dashboard;
