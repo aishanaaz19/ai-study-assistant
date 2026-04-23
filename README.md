@@ -17,14 +17,14 @@ An intelligent, student-friendly web app that helps you upload study materials (
 
 ## 🔧 Tech Stack
 
-| Layer      | Technology                  |
+| Layer      | Technology                   |
 |------------|------------------------------|
 | Frontend   | React, Tailwind CSS          |
 | Backend    | Node.js, Express             |
-| AI Engine  | Gemini API                   |
-| Python API | Flask, Transformers          |
+| AI Engine  | Gemini API, Groq             |
+| Database   | MongoDb                      |
 | File Upload| Multer, pdf-parse            |
-| Deployment | Vercel and Render   |
+| Deployment | Vercel and Render            |
 
 ---
 
