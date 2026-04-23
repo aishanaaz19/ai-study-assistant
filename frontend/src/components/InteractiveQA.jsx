@@ -50,8 +50,7 @@ const InteractiveQA = ({ pdfState, qaState, setQaState }) => {
     
     try {
       const token = localStorage.getItem('token');
-      
-      const response = await axios.post("http://localhost:3000/api/generate-answer", {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/generate-answer`, {
         summary: pdfState.summary,
         question: question,
         fileName: pdfState.file?.name

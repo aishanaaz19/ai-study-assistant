@@ -25,8 +25,9 @@ const YouTubeDialog = ({ showMessage }) => {
     try {
       const token = localStorage.getItem('token');
       // Fetch transcript
+      
       const transcriptRes = await axios.post(
-        "http://localhost:3000/api/youtube-transcript",
+        `${import.meta.env.VITE_API_URL}/api/youtube-transcript`,
         { url: youtubeUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -34,7 +35,7 @@ const YouTubeDialog = ({ showMessage }) => {
 
       // Fetch summary
       const summaryRes = await axios.post(
-        "http://localhost:3000/api/summarize",
+        `${import.meta.env.VITE_API_URL}/api/summarize`,
         { text: transcriptRes.data.transcript },
         { headers: { Authorization: `Bearer ${token}` } }
       );

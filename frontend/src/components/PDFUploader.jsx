@@ -40,7 +40,7 @@ const PDFUploader = ({ pdfState, setPdfState, setQaState, showMessage }) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      'http://localhost:3000/api/generate-questions',
+      `${import.meta.env.VITE_API_URL}/api/generate-questions`,
       { summary: summaryText },
       {
         headers: { 
@@ -110,7 +110,7 @@ const getDefaultQuestions = () => [
       });
 
 
-      const res = await axios.post("http://localhost:3000/api/pdf-summary", formData, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pdf-summary`, formData, {
         headers: { 
           "Content-Type": "multipart/form-data",
           "Authorization": `Bearer ${token}`

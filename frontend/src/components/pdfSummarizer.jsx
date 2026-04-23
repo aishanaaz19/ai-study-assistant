@@ -51,7 +51,7 @@ export default function PdfSummarizer() {
   const generateSuggestedQuestions = async (summary) => {
   try {
     // First try to get AI-generated questions from backend
-    const response = await axios.post('http://localhost:3000/api/generate-questions', {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/generate-questions`, {
       summary,
       count: 5 // Number of questions to generate
     });
@@ -99,7 +99,7 @@ export default function PdfSummarizer() {
     
     try {
       // Call your backend API to generate answer based on PDF content and question
-      const response = await axios.post("http://localhost:3000/api/generate-answer", {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/generate-answer`, {
         summary: summary,
         question: question,
         fileName: file?.name
@@ -150,7 +150,7 @@ I'd be happy to elaborate further if you have more specific questions! Please no
       setSuggestedQuestions([]);
       setChatHistory([]);
 
-      const res = await axios.post("http://localhost:3000/api/pdf-summary", formData, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pdf-summary`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

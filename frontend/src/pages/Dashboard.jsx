@@ -75,7 +75,7 @@ const Dashboard = () => {
         if (savedUser) {
           setUser(JSON.parse(savedUser));
         }
-        const response = await axios.get('http://localhost:3000/api/auth/me', {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUser(response.data.user);

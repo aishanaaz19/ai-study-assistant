@@ -27,7 +27,7 @@ const FlashcardGenerator = ({ pdfState, showMessage }) => {
     formData.append('pdfFile', pdfState.file);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/generate-flashcards', formData, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/generate-flashcards`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -89,7 +89,7 @@ const FlashcardGenerator = ({ pdfState, showMessage }) => {
     
     const response = await axios({
       method: 'POST',
-      url: `http://localhost:3000/api/export-flashcards/${format}`,
+      url: `${import.meta.env.VITE_API_URL}/api/export-flashcards/${format}`,
       data: {
         flashcards,
         fileName: pdfState.file?.name?.replace('.pdf', '') || 'StudyMate'

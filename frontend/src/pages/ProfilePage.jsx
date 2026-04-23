@@ -22,7 +22,8 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/auth/me", {
+        const response = await axios.get(`
+          ${import.meta.env.VITE_API_URL}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(response.data.user);
@@ -52,7 +53,7 @@ const ProfilePage = () => {
   setSaving(true);
   try {
     await axios.patch(
-      "http://localhost:3000/api/users/me",
+      `${import.meta.env.VITE_API_URL}/api/users/me`,
       {
         name: editName,
         profilePicture: photoPreview,

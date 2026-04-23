@@ -18,7 +18,7 @@ const LinkSummarizer = () => {
     }
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:3000/api/web-summary", {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/web-summary`, {
         url,
         wordLimit: 200,
       });

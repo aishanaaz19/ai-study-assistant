@@ -28,7 +28,7 @@ const FeedbackForm = () => {
     setSubmitStatus(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/feedback', formData);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/feedback`, formData);
       setSubmitStatus({ type: 'success', message: 'Thank you for your feedback!' });
       // Reset form
       setFormData({

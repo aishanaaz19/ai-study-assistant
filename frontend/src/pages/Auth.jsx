@@ -122,7 +122,7 @@ const Auth = () => {
       setLoading(true);
       console.log('📤 Sending Google token to backend...');
       
-      const res = await axios.post('http://localhost:3000/api/auth/google', {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/google`,{
         token: response.credential
       });
 
@@ -218,7 +218,7 @@ const Auth = () => {
     try {
       if (isSignup) {
         // Registration
-        const response = await axios.post('http://localhost:3000/api/auth/register', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`,{
           name: formData.fullName,
           email: formData.email,
           password: formData.password
@@ -232,7 +232,7 @@ const Auth = () => {
         }
       } else {
         // Login
-        const response = await axios.post('http://localhost:3000/api/auth/login', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, {
           email: formData.email,
           password: formData.password
         });
