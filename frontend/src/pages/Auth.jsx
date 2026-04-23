@@ -243,7 +243,9 @@ const Auth = () => {
           localStorage.setItem('user', JSON.stringify(response.data.user));
           
           toast.success('Login successful! Welcome to StudyMate.');
-          navigate('/dashboard');
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1500);
         }
       }
     } catch (error) {
