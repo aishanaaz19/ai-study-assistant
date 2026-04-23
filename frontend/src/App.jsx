@@ -11,6 +11,7 @@ import PaymentPage from './pages/PaymentPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 
 function App() {
+  console.log(import.meta.env.VITE_API_URL)
   return (
     <Router>
       <Toaster position="top-center" reverseOrder={false} />
