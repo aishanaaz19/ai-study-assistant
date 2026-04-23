@@ -6,7 +6,7 @@ import connectDB from './config/database.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
-import youtubeRoute from './routes/youtube.js';
+// import youtubeRoute from './routes/youtube.js';
 import uploadRoute from './routes/upload.js';
 import summarizeRoutes from './routes/summarize.js';
 import pdfSummaryRoute from './routes/pdfSummary.js';
@@ -56,7 +56,7 @@ app.use("/api/generate-mindmap", generateMindmapRoute);
 app.use('/api/auth/forgot-password', ForgotPassword);
 app.use('/api/auth/reset-password', ResetPassword);
 app.use('/api/web-summary', webSummaryRoute);
-app.use('/api', youtubeRoute);
+// app.use('/api', youtubeRoute);
 app.use('/api/feedback', feedbackRoutes);
 
 // Health check

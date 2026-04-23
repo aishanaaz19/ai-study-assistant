@@ -7,47 +7,58 @@ import {
 
 // Structured Summary Component
 const StructuredSummary = ({ content }) => {
-  const parseStructuredSummary = (text) => {
-    const sections = {
-      overview: '',
-      highlights: [],
-      insights: [],
-      takeaways: []
-    };
-
-    // Split content by sections
-    const overviewMatch = text.match(/\*\*OVERVIEW:\*\*(.*?)(?=\*\*|$)/s);
-    const highlightsMatch = text.match(/\*\*KEY HIGHLIGHTS:\*\*(.*?)(?=\*\*|$)/s);
-    const insightsMatch = text.match(/\*\*KEY INSIGHTS:\*\*(.*?)(?=\*\*|$)/s);
-    const takeawaysMatch = text.match(/\*\*MAIN TAKEAWAYS:\*\*(.*?)(?=\*\*|$)/s);
-
-    if (overviewMatch) {
-      sections.overview = overviewMatch[1].trim();
-    }
-
-    if (highlightsMatch) {
-      sections.highlights = highlightsMatch[1]
-        .split('•')
-        .filter(item => item.trim())
-        .map(item => item.trim());
-    }
-
-    if (insightsMatch) {
-      sections.insights = insightsMatch[1]
-        .split('•')
-        .filter(item => item.trim())
-        .map(item => item.trim());
-    }
-
-    if (takeawaysMatch) {
-      sections.takeaways = takeawaysMatch[1]
-        .split('•')
-        .filter(item => item.trim())
-        .map(item => item.trim());
-    }
-
-    return sections;
+const parseStructuredSummary = (text) => {
+  const sections = {
+    overview: '',
+    highlights: [],
+    insights: [],
+    takeaways: []
   };
+
+  // Remove optional top heading like "Structured Summary"
+  text = text.replace(/\*\*Structured Summary:?\*\*/i, '').trim();
+
+  // Overview
+  const overviewMatch = text.match(/(?:\*\*)?Overview(?:\*\*)?\s*\n([\s\S]*?)(?=\n\*\*Key Highlights|\n\*\*Key Insights|\n\*\*Main Takeaways|$)/i);
+
+  if (overviewMatch) {
+    sections.overview = overviewMatch[1].trim();
+  }
+
+  // Key Highlights
+  const highlightsMatch = text.match(/(?:\*\*)?Key Highlights(?:\*\*)?\s*\n([\s\S]*?)(?=\n\*\*Key Insights|\n\*\*Main Takeaways|$)/i);
+
+  if (highlightsMatch) {
+    sections.highlights = highlightsMatch[1]
+      .split(/\n[-•]/)
+      .map(item => item.replace(/^[-•]\s*/, '').trim())
+      .filter(Boolean);
+  }
+
+  // Key Insights
+  const insightsMatch = text.match(/(?:\*\*)?Key Insights(?:\*\*)?\s*\n([\s\S]*?)(?=\n\*\*Main Takeaways|$)/i);
+
+  if (insightsMatch) {
+    sections.insights = insightsMatch[1]
+      .split(/\n[-•]/)
+      .map(item => item.replace(/^[-•]\s*/, '').trim())
+      .filter(Boolean);
+  }
+
+  // Main Takeaways
+  const takeawaysMatch = text.match(/(?:\*\*)?Main Takeaways(?:\*\*)?\s*\n([\s\S]*)/i);
+
+  if (takeawaysMatch) {
+    sections.takeaways = takeawaysMatch[1]
+      .split(/\n[-•]/)
+      .map(item => item.replace(/^[-•]\s*/, '').trim())
+      .filter(Boolean);
+  }
+
+  return sections;
+};
+
+  console.log("RAW SUMMARY:", content);
 
   const sections = parseStructuredSummary(content);
 
