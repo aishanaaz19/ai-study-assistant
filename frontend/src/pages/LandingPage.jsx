@@ -302,7 +302,7 @@ const LandingPage = () => {
           </h1>
           
           <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
-            Upload your study materials and let AI create summaries, flashcards, and answer your questions instantly.
+            Upload your study materials and let AI create summaries, flashcards, mindmaps and answer your questions instantly.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
