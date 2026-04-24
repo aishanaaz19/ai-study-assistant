@@ -247,6 +247,11 @@ const LandingPage = () => {
               >
                 <span className="group-hover:text-blue-700 transition-colors duration-300">Get started</span>
               </button>
+              <button onClick={() => navigate('/auth?mode=login')} 
+              className="border border-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium hover:border-blue-400/50 hover:bg-blue-500/10 hover:text-blue-200 hover:rounded-xl transition-all duration-300"
+            >
+              Login
+            </button>
 
             </div>
 
@@ -274,6 +279,11 @@ const LandingPage = () => {
               >
                 Get started
               </button>
+              <button onClick={() => navigate('/auth?mode=login')} 
+                className="w-full border border-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium hover:border-blue-400/50 hover:bg-blue-500/10 hover:text-blue-200 hover:rounded-xl transition-all duration-300"
+              >
+                Login
+              </button>
             </div>
           </div>
         )}
@@ -300,13 +310,14 @@ const LandingPage = () => {
               onClick={() => navigate('/auth')}
               className="group bg-white text-black px-8 py-3 rounded-xl font-medium hover:bg-blue-50 hover:shadow-lg hover:shadow-blue-500/20 hover:rounded-2xl transition-all duration-300 flex items-center justify-center gap-2"
             >
-              <span className="group-hover:text-blue-700 transition-colors duration-300">Start learning free</span>
+              <span className="group-hover:text-blue-700 transition-colors duration-300">✦ Try it free</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:text-blue-600 transition-all duration-300" />
             </button>
-            <button onClick={() => navigate('/dashboard')}
-             className="border border-white/20 text-white px-8 py-3 rounded-xl font-medium hover:border-purple-500/40 hover:bg-purple-500/5 hover:text-purple-200 hover:rounded-2xl transition-all duration-300">
-              Watch demo
-            </button>
+            <a href="#pricing">
+              <button className="border border-white/20 text-white px-8 py-3 rounded-xl font-medium hover:border-purple-500/40 hover:bg-purple-500/5 hover:text-purple-200 hover:rounded-2xl transition-all duration-300">
+                Upgrade to Pro
+              </button>
+            </a>
           </div>
 
           {/* Stats */}
